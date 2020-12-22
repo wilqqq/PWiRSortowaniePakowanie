@@ -18,4 +18,16 @@ package bufor is
 		Pierwszy: indexerType := 0;
 		Ostatni: indexerType := 0;
 	end BuforN;
+	protected type BuforP is
+		entry Wstaw(X: in TypElementu);
+		entry Pobierz(X: out TypElementu);
+		entry Podmien(X : in out TypElementu; sukces : out Boolean);
+		function Ile return Integer;
+		function Pusty return Boolean;
+		function Pelny return Boolean;
+	private 
+		Bufor: TypBufora; -- nasz bufor - tablica(realizująca funkcję kolejki)
+		Pierwszy: indexerType := 0;
+		Ostatni: indexerType := 0;
+	end BuforP;
 end bufor;

@@ -1,19 +1,13 @@
 -- kontroler.adb
 
-with Ada.Text_IO, Ada.Numerics.Float_Random, bufor;
+with Ada.Text_IO, Ada.Numerics.Float_Random, Ada.Numerics.Discrete_Random, bufor;
 use Ada.Text_IO, Ada.Numerics.Float_Random;
 
 procedure kontroler is
-    -- typ danych określający sortowane obiekty
-    type Obiekt is (typ1, typ2);
 
     package BuforA is new bufor(Float);
     package BuforB is new bufor(Float);
     package BuforS is new bufor(Float);
-
-    -- -- wersja z typem protected
-    -- package BuforObjektow is new bufor(Obiekt);
-    -- BuforA : BuforObjektow.BuforN;
     
     task type Tasmociag is
         entry Start;
@@ -56,7 +50,6 @@ procedure kontroler is
     S : Sortownik;
     PA : PakerA;
     PB : PakerB;
-    P : array(Obiekt) of PakerA; -- tak można stworzyć kilka odbiorników
     B : Bezpieczenstwo;
 
     task body Tasmociag is
