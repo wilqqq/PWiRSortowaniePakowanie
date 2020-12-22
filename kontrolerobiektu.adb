@@ -7,8 +7,8 @@ procedure kontrolerobiektu is
     -- typ danych określający sortowane obiekty
     type Obiekt is (typ1, typ2);
     iloscTypow : Integer := 2;
-    -- wersja z typem protected
     package LosObiekt is new Ada.Numerics.Discrete_Random(Obiekt);
+    -- wersja z typem protected
     package BuforObjektow is new bufor(Obiekt);
 
     -- task taśmociągu / generatora obiektów definicja
@@ -253,7 +253,7 @@ begin
     end loop;
     -- startowanie taśmociągu
     delay 0.01;
-    T.Start(300);
+    T.Start(30);
     -- test bezpieczeństwa
     delay 2.0;
     B.Sygnalizuj;
