@@ -4,9 +4,16 @@ with Ada.Text_IO, Ada.Numerics.Float_Random, bufor;
 use Ada.Text_IO, Ada.Numerics.Float_Random;
 
 procedure kontroler is
+    -- typ danych określający sortowane obiekty
+    type Obiekt is (typ1, typ2);
+
     package BuforA is new bufor(Float);
     package BuforB is new bufor(Float);
-    package BuforS is new bufor(Float); 
+    package BuforS is new bufor(Float);
+
+    -- -- wersja z typem protected
+    -- package BuforObjektow is new bufor(Obiekt);
+    -- BuforA : BuforObjektow.BuforN;
     
     task type Tasmociag is
         entry Start;
@@ -45,18 +52,16 @@ procedure kontroler is
         entry Stop;
     end Bezpieczenstwo;
 
-    type indexerType is mod 3;
-    test : indexerType := 0;
-
-
     T : Tasmociag;
     S : Sortownik;
     PA : PakerA;
     PB : PakerB;
+    P : array(Obiekt) of PakerA; -- tak można stworzyć kilka odbiorników
     B : Bezpieczenstwo;
 
     task body Tasmociag is
         G : Generator;
+        L : Integer := 30;
     begin
         accept Start;
         loop
@@ -75,14 +80,25 @@ procedure kontroler is
                 if not BuforS.BuforN.Pelny then
                     Put_Line(" Tasmociag wstawia do bufora sortownika");
                     BuforS.BuforN.Wstaw(Float(Random(G)*5.0));
+                    L := L - 1;
                     delay 0.1;
                 end if;
+
+                exit when L <= 0;
             end select;
         end loop;
+        -- poniższy kod nie jest ssący! zamienić uśmiercanie na sprawdzanie czy tasmociag zyje i pusty buforS        # # # # # # # 
+        -- poczekaj do opróżnienia buforu sortownika
+        while not BuforS.BuforN.Pusty loop
+           null;
+        end loop;
+         -- uśmierć sortownik
+         S.Stop;
     end Tasmociag;
 
     task body Sortownik is
         dane : Float;
+        podmieniony : Boolean := True;
     begin
         accept Start;
         loop
@@ -97,6 +113,7 @@ procedure kontroler is
                     exit;
                 end loop;
             or
+                -- STARE
                 accept Przyjmij(dane : Float) do
                     Put_Line(" SORT przyjmuje " & dane'Img);
                     if dane > 0.0 then
@@ -112,26 +129,29 @@ procedure kontroler is
                     end if;
                 end Przyjmij;
             else
-                 if not BuforS.BuforN.Pusty then
+                -- pobierz nową próbkę jeśli nie nastąpiła podmiana
+                if not BuforS.BuforN.Pusty then
                     BuforS.BuforN.Pobierz(dane);
+                -- end if;
+                
+                    -- tutaj następuje sortowanie 
                     Put_Line(" SORT przyjmuje " & dane'Img);
                     -- #TODO tylko sortownik może ściągnąć z tego bufora (blokować taśmociąg jeśli jest prawie pełny) 
                     if dane > 0.0 then
-                        -- wstaw na bufor a jeśli ten niepełny
-                        -- jeśli pełny wstaw do wewnętrzzego bufora? 
-                        --PA.Przyjmij(dane);
-                        if not BuforA.BuforN.Pelny then
+                        if not BuforA.BuforN.Pelny then --jeśli bufor A może przyjmować wyślij
                             Put_Line(" SORT przekazuje do PAKA ");
                             BuforA.BuforN.Wstaw(dane);
-                        elsif not BuforS.BuforN.Pelny then
+                        elsif not BuforS.BuforN.Pelny then -- jeśli bufor A pełny a S ma miejsce - odstaw na koniec i pobierz kolejny 
                             BuforS.BuforN.Wstaw(dane);
-                        else
-                            T.Wstrzymaj;
-                            while BuforS.BuforN.Pelny loop
-                                null;
-                            end loop;
-                            BuforS.BuforN.Wstaw(dane);
-                            T.Wznow;
+                        else 
+                            BuforS.BuforN.Podmien (dane, podmieniony);
+                            if not podmieniony then
+                                -- jeśli bufor S ani A nie mają miejsca - czekaj aż A się zwolni
+                                while BuforA.BuforN.Pelny loop
+                                    null;
+                                end loop;
+                                BuforA.BuforN.Wstaw(dane);
+                            end if;
                         end if;
                     --else
                         --PB.Przyjmij(dane);
@@ -165,7 +185,7 @@ procedure kontroler is
                 if not BuforA.BuforN.Pusty then
                     Put_Line(" PAKA pobiera z bufora");
                     BuforA.BuforN.Pobierz(dane);
-                    Put_Line(" PAKA pobrał " & dane'Img);
+                    Put_Line(" PakerA pobrał " & dane'Img);
                     delay 1.0;
                 end if;
             end select;
