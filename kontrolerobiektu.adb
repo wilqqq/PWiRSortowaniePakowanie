@@ -58,47 +58,57 @@ procedure kontrolerobiektu is
     -- task taśmociągu / generatora implementacja
     task body TasmociagObiektow is
         G : LosObiekt.Generator;
-        L : Integer := 30;
+        L : Integer;
+        pauza : Boolean := False;
     begin
         accept Start(liczbaObiektow : in Integer) do
             L := liczbaObiektow;
         end Start;
-        -- accept Start(L);
+        Put_Line(" TASMOCIAG ROZPOCZYNA PRACE");
         loop
             select 
                 accept Stop;
-                Put_Line(" Tasmociag baj baj");
                 exit;
             or
-                -- TEST                                         # # # #
-                accept Wstrzymaj;
-                Put_Line("zatrzymuje T");
-                while True loop
-                    accept Wznow;
-                    Put_Line("wznawiam T");
-                    exit;
-                end loop;
-            else 
-                --S.Przyjmij(Float(Random(G)*5.0));
-                if not BS.Pelny then
-                    Put_Line(" Tasmociag wstawia do bufora sortownika");
-                    BS.Wstaw(LosObiekt.Random(G));
-                    L := L - 1;
-                    delay 0.1;
+                -- TEST  TAK SIE POWINNO JE ZATRZYMYWAĆ - POZOSTAŁE TRZEBA TAK PRZEROBIĆ       # # # #
+                accept Wstrzymaj do
+                Put_Line("TASMOCIAG WSTRZYMANY");
+                pauza := True;
+                end Wstrzymaj;
+                -- while True loop
+            or    
+                accept Wznow do
+                Put_Line("TASMOCIAG WZNOWIONY");
+                pauza := False;
+                end Wznow;
+                --     exit;
+                -- end loop;
+            else
+            -- -- zamiast else wykorzystany timed-entry
+            -- or
+            --     delay 0.05;
+                if not pauza then
+                    --S.Przyjmij(Float(Random(G)*5.0));
+                    if not BS.Pelny then
+                        Put_Line(" TASMOCIAG UMIESCZCZA DANE DO BUFORA SORTOWNIKA");
+                        BS.Wstaw(LosObiekt.Random(G));
+                        L := L - 1;
+                        delay 0.1;
+                    end if;
+                    -- jak ujemne to generuje w nieskonczonosc
+                    exit when L = 0;
                 end if;
-                -- jak ujemne to generuje w nieskonczonosc
-                exit when L = 0;
             end select;
         end loop;
-        -- poniższy kod nie jest ssący! zamienić uśmiercanie na sprawdzanie czy tasmociag zyje i pusty buforS        # # # # # # # 
-        -- poczekaj do opróżnienia buforu sortownika
-        while not BS.Pusty loop
-           null;
-        end loop;
-        -- uśmierć sortowniki
-        for S of Ss loop
-           S.Stop;
-        end loop;
+        Put_Line(" TASMOCIAG KONCZY PRACE");
+        -- -- poczekaj do opróżnienia buforu sortownika
+        -- while not BS.Pusty loop
+        --    null;
+        -- end loop;
+        -- -- uśmierć sortowniki
+        -- for S of Ss loop
+        --    S.Stop;
+        -- end loop;
     end TasmociagObiektow;
 
     -- task sortownika implementacja
@@ -115,10 +125,12 @@ procedure kontrolerobiektu is
             or
                 -- TODO do stestowania czy ta metoda czekania działa                                        # # # #
                 accept Wstrzymaj;
-                while True loop
+                Put_Line("SORTOWNIK WSTRZYMANY");
+                -- while True loop
                     accept Wznow;
-                    exit;
-                end loop;
+                    Put_Line("SORTOWNIK WZNOWIONY");
+                --     exit;
+                -- end loop;
             else
                 -- pobierz nową próbkę jeśli nie nastąpiła podmiana
                 if not podmieniony and not BS.Pusty then
@@ -159,7 +171,7 @@ procedure kontrolerobiektu is
             typ := typO;
             nazwa := nazwaO;
         end Start;
-        Put_Line(" PAKER OBIEKTU " & nazwa & " dla " & typ'Img & " ROZPOCZYNA PRACE");
+        Put_Line(" PAKER OBIEKTU " & nazwa & " DLA " & typ'Img & " ROZPOCZYNA PRACE");
         loop
             select 
                 accept Stop;
@@ -167,15 +179,17 @@ procedure kontrolerobiektu is
             or
                 -- TODO jaktechnika powyżej działa to zmień                                                 # # # # 
                 accept Wstrzymaj;
-                while True loop
+                Put_Line("PAKER WSTRZYMANY");
+                -- while True loop
                     accept Wznow;
-                    exit;
-                end loop;
+                    Put_Line("PAKER WZNOWIONY");
+                --     exit;
+                -- end loop;
             else
                 -- sprawdzaj czy bufor nie jest pusty, jeśli nie jest pobierz
                 if not BOs(typ).Pusty then
                     BOs(typ).Pobierz(dane);
-                    Put_Line(" PAKER OBIEKTU " & nazwa & " pobrał " & dane'Img);
+                    Put_Line(" PAKER OBIEKTU " & nazwa & " POBRAŁ " & dane'Img);
                     delay 1.0;
                 end if;
             end select;
@@ -187,31 +201,41 @@ procedure kontrolerobiektu is
     task body Bezpieczenstwo is
     begin
         accept Start;
+        Put_Line(" STEROWNIK BEZPIECZENSTWA ROZPOCZAL DZIALANIE");
         loop
             select 
                 accept Stop;
-                Put_Line(" BEZP baj baj");
+                Put_Line("ZATRZYMANIE LINI");
+                T.Stop;
+                for S of Ss loop
+                    S.Stop;
+                end loop;
+                for P of Ps loop
+                    P.Stop;
+                end loop;
                 exit;
             or
                 accept Sygnalizuj;
-                Put_Line("2s E-STOP");
+                Put_Line("E-STOP");
                 T.Wstrzymaj;
-                for S of Ss loop
-                    S.Wstrzymaj;
-                end loop;
-                for P of Ps loop
-                    P.Wstrzymaj;
-                end loop;
+                -- for S of Ss loop
+                --     S.Wstrzymaj;
+                -- end loop;
+                -- for P of Ps loop
+                --     P.Wstrzymaj;
+                -- end loop;
                 delay 2.0;
+                Put_Line("KONIEC E-STOP");
                 T.Wznow;
-                for S of Ss loop
-                    S.Wznow;
-                end loop;
-                for P of Ps loop
-                    P.Wznow;
-                end loop;
+                -- for S of Ss loop
+                --     S.Wznow;
+                -- end loop;
+                -- for P of Ps loop
+                --     P.Wznow;
+                -- end loop;
             end select;
         end loop;
+        Put_Line(" STEROWNIK BEZPIECZENSTWA ZAKONCZYL DZIALANIE");
     end Bezpieczenstwo;
 
 begin
@@ -228,6 +252,7 @@ begin
         S.Start;
     end loop;
     -- startowanie taśmociągu
+    delay 0.01;
     T.Start(300);
     -- test bezpieczeństwa
     delay 2.0;
