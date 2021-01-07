@@ -102,25 +102,42 @@ procedure kontrolerobiektu is
         end loop;
         Put_Line(" TASMOCIAG KONCZY PRACE");
         -- -- poczekaj do opróżnienia buforu sortownika
-        -- while not BS.Pusty loop
-        --    null;
-        -- end loop;
+        while not BS.Pusty loop
+           null;
+        end loop;
         -- -- uśmierć sortowniki
-        -- for S of Ss loop
-        --    S.Stop;
-        -- end loop;
+        for S of Ss loop
+           S.Stop;
+        end loop;
     end TasmociagObiektow;
 
     -- task sortownika implementacja
     task body SortownikObiektow is
         dane : Obiekt;
         podmieniony : Boolean := False;
+        numer_obiektu: Integer := 0;
     begin
         accept Start;
         Put_Line(" SORTOWNIK OBIEKTOW ROZPOCZYNA PRACE");
         loop
             select 
                 accept Stop;
+                Array_Loop :
+                    for I in Obiekt loop
+
+                        while not BOs(I).pusty loop
+                                delay 0.01;
+                            end loop;
+
+                end loop Array_Loop;
+                
+                Array_Loop1 :
+                    for I in Ps'Range loop
+
+                        Ps(I).Stop;
+
+                end loop Array_Loop1;
+
                 exit;
             or
                 -- TODO do stestowania czy ta metoda czekania działa                                        # # # #
@@ -133,32 +150,51 @@ procedure kontrolerobiektu is
                 -- end loop;
             else
                 -- pobierz nową próbkę jeśli nie nastąpiła podmiana
-                if not podmieniony and not BS.Pusty then
+                if not BS.Pusty then
                     BS.Pobierz(dane);
                     Put_Line(" SORTOWNIK OBIEKTOW POBRAŁ " & dane'Img);
-                end if;
 
-                -- jeśli nie ma miejsca dla danego elementu to spróbuj go podmienić
-                if BOs(dane).Pelny then
-                    BS.Podmien(dane, podmieniony);
-                    Put_Line(" SORTOWNIK OBIEKTOW PODMIENIA ELEMENT NA" & dane'Img);
-                    -- jeśli podmiana się nie udała to poczekaj kiedy zwolni się miejsce w buforze
-                    if not podmieniony then
-                        Put_Line(" SORTOWNIK OBIEKTOW CZEKA NA WOLNE MIEJSCE ");
-                        -- TODO być może nie potrzebne ze względu na guarda                                 # # # #
-                        while BOs(dane).Pelny loop
-                            delay 0.01;
-                        end loop;
-                        -- doczekał się więc wrzuca
-                        BOs(dane).Wstaw(dane);    
+                     -- jeśli nie ma miejsca dla danego elementu to spróbuj go podmienić
+                    if BOs(dane).Pelny then
+                        BS.Podmien(dane, podmieniony);
+                        Put_Line(" SORTOWNIK OBIEKTOW PODMIENIA ELEMENT NA" & dane'Img);
+                        -- jeśli podmiana się nie udała to poczekaj kiedy zwolni się miejsce w buforze
+                        if not podmieniony then
+                            Put_Line(" SORTOWNIK OBIEKTOW CZEKA NA WOLNE MIEJSCE ");
+                            -- TODO być może nie potrzebne ze względu na guarda                                 # # # #
+                            while BOs(dane).Pelny loop
+                                delay 0.01;
+                            end loop;
+                            -- doczekał się więc wrzuca
+                            BOs(dane).Wstaw(dane);
+                            numer_obiektu := numer_obiektu +1;
+                            Put_Line(" Poslany obiekt nr: " & numer_obiektu'Img & "typu: " & dane'Img);    
+                        else
+                            if not BOs(dane).Pelny then
+                                BOs(dane).Wstaw(dane);
+                                podmieniony := False;
+                            else
+                                Put_Line(" SORTOWNIK OBIEKTOW CZEKA NA WOLNE MIEJSCE ");
+                                while BOs(dane).Pelny loop
+                                    delay 0.01;
+                                end loop;
+                                -- doczekał się więc wrzuca
+                                BOs(dane).Wstaw(dane); 
+                                podmieniony := False;
+                                numer_obiektu := numer_obiektu +1;
+                                Put_Line(" Poslany obiekt nr: " & numer_obiektu'Img & "typu: " & dane'Img);
+                            end if;
+                        end if;
+                    else
+                        BOs(dane).Wstaw(dane);
+                        numer_obiektu := numer_obiektu +1;
+                        Put_Line(" Poslany obiekt nr: " & numer_obiektu'Img & "typu: " & dane'Img);
                     end if;
-                -- jeśli jest miejsce to wstaw element do buforu danego typu
-                else
-                    BOs(dane).Wstaw(dane);
                 end if;
             end select;
         end loop;
         Put_Line(" SORTOWNIK OBIEKTOW KONCZY PRACE");
+        B.Stop;
     end SortownikObiektow;
 
     -- PRZEMIENIĆ NA PAKIET GENERYCZNY O WEJŚCIACH NAZWA I TYP
@@ -205,14 +241,14 @@ procedure kontrolerobiektu is
         loop
             select 
                 accept Stop;
-                Put_Line("ZATRZYMANIE LINI");
-                T.Stop;
-                for S of Ss loop
-                    S.Stop;
-                end loop;
-                for P of Ps loop
-                    P.Stop;
-                end loop;
+                --Put_Line("ZATRZYMANIE LINI");
+                --T.Stop;
+                --for S of Ss loop
+                --    S.Stop;
+                --end loop;
+                --for P of Ps loop
+                --    P.Stop;
+                --end loop;
                 exit;
             or
                 accept Sygnalizuj;
