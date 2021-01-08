@@ -1,10 +1,12 @@
 package body bufor is
 	protected body BuforN is
 
-		entry Wstaw(X: in TypElementu) when (Ile < N) is -- jesli bufor nie jest pelny to rozpocznij wstawianie, jeśli jest to poczekaj
+		entry Wstaw(X: in TypElementu; IleWBuforze: out Integer) when (Ile < N) is -- jesli bufor nie jest pelny to rozpocznij wstawianie, jeśli jest to poczekaj
 		begin
 			Bufor(Integer(Ostatni)) := X; --wstawienie wartosci do bufora
 			Ostatni := Ostatni + 1; --nowy indeks wierzchu stosu
+			IleWBuforze := Ile;
+			delay 0.5;
 			--Put_Line("Liczba elementów w buforze: " & Index'Img); --aktualna liczba elementów w buforze
 			--LiczbaWstawionych := LiczbaWstawionych+1;		
 		end Wstaw;
@@ -47,10 +49,12 @@ package body bufor is
 	-- testowy
 	protected body BuforP is
 
-		entry Wstaw(X: in TypElementu) when (Ile < N) is -- jesli bufor nie jest pelny to rozpocznij wstawianie, jeśli jest to poczekaj
+		entry Wstaw(X: in TypElementu; IleWBuforze: out Integer) when (Ile < N) is -- jesli bufor nie jest pelny to rozpocznij wstawianie, jeśli jest to poczekaj
 		begin
 			Bufor(Integer(Ostatni)) := X; --wstawienie wartosci do bufora
 			Ostatni := Ostatni + 1; --nowy indeks wierzchu stosu
+			IleWBuforze := Ile;
+			delay 0.1; -- jak nie ma tego delaya to sie nie zakancza jak powinno
 			--Put_Line("Liczba elementów w buforze: " & Index'Img); --aktualna liczba elementów w buforze
 			--LiczbaWstawionych := LiczbaWstawionych+1;		
 		end Wstaw;
@@ -61,6 +65,7 @@ package body bufor is
 			Pierwszy := Pierwszy + 1; -- uaktualnienie indeksu wierzchu stosu
 			--Put_Line("Liczba elementów w buforze: " & Index'Img);
 			--LiczbaPobranych := LiczbaPobranych + 1;
+			delay 1.5;
 		end Pobierz;
 
 		-- podmiana elementu jak w mechaniźmie karuzelowym przez co można pakować elementy innego typu bez potrzeby czekania

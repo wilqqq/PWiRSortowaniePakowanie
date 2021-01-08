@@ -6,8 +6,8 @@ package bufor is
 	type TypBufora is array(Integer range 0..(N-1)) of TypElementu; --tworzymy bufor(tablicę) długości N i zdefiniowanym wyżej typie elementów
 	type indexerType is mod N; -- indeksery są typu modulo, żeby przeładowanie powodowało przeskok na początek kolejki
 	-- protected type BuforN is
-	protected BuforN is
-		entry Wstaw(X: in TypElementu);
+	protected type BuforN is
+		entry Wstaw(X: in TypElementu; IleWBuforze: out Integer);
 		entry Pobierz(X: out TypElementu);
 		entry Podmien(X : in out TypElementu; sukces : out Boolean);
 		function Ile return Integer;
@@ -19,7 +19,7 @@ package bufor is
 		Ostatni: indexerType := 0;
 	end BuforN;
 	protected type BuforP is
-		entry Wstaw(X: in TypElementu);
+		entry Wstaw(X: in TypElementu; IleWBuforze: out Integer);
 		entry Pobierz(X: out TypElementu);
 		entry Podmien(X : in out TypElementu; sukces : out Boolean);
 		function Ile return Integer;
