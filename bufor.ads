@@ -1,6 +1,7 @@
 generic 
     --N: Natural; --liczba typu integer w przedziale 0..Ostatnia_wartość_integer 
     type TypElementu is private; -- dowolny typ 
+	with function Obraz (X : TypElementu) return String;
 package bufor is
     N: constant Natural := 10; -- rozmiar bufora
 	type TypBufora is array(Integer range 0..(N-1)) of TypElementu; --tworzymy bufor(tablicę) długości N i zdefiniowanym wyżej typie elementów
@@ -22,6 +23,9 @@ package bufor is
 		entry Wstaw(X: in TypElementu; IleWBuforze: out Integer);
 		entry Pobierz(X: out TypElementu);
 		entry Podmien(X : in out TypElementu; sukces : out Boolean);
+		--entry Poka (s : out String);
+		function Poka return String;
+		--function ZwrocCaly return TypBufora;
 		function Ile return Integer;
 		function Pusty return Boolean;
 		function Pelny return Boolean;
