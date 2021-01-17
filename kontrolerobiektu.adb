@@ -6,8 +6,8 @@ use Ada.Text_IO, Ada.Numerics.Float_Random;
 
 procedure kontrolerobiektu is
     -- typ danych określający sortowane obiekty
-    type Obiekt is (typ1, typ2);
-    iloscTypow : constant Integer := 2;
+    type Obiekt is (typ1, typ2, typ3);
+    iloscTypow : constant Integer := 3;
     function Obraz (o : Obiekt) return String is
         (o'Img);
     package LosObiekt is new Ada.Numerics.Discrete_Random (Obiekt);
@@ -32,7 +32,7 @@ procedure kontrolerobiektu is
 
     -- task pakera definicja (może zmienić na generyczny pakiet?)
     task type PakerObiektu is
-        entry Start (typO : in Obiekt; nazwaO : in String);
+        entry Start (typO : in Obiekt; nazwaO : in String; numerO : in integer);
         entry Wstrzymaj;
         entry Wznow;
         entry Stop;
@@ -42,6 +42,7 @@ procedure kontrolerobiektu is
     task type Bezpieczenstwo is
         entry Start;
         entry Sygnalizuj;
+        entry Wznow;
         entry Stop;
     end Bezpieczenstwo;
 
@@ -54,9 +55,11 @@ procedure kontrolerobiektu is
     -- tworzenie taśmociągu
     T : TasmociagObiektow;
     -- tworzenie sortowników
-    Ss : array (Integer range 0 .. 0) of SortownikObiektow;
+    Ss : array (Integer range 0 .. 2) of SortownikObiektow;
     -- tworzenie pakerów (nie zainicjowanych!)
-    Ps : array (Integer range 0 .. 4) of PakerObiektu;
+    Ps : array (Integer range 0 .. 8) of PakerObiektu;
+    -- tworzenie tablicy zmiennych informujących czy dany paker jest w pracy
+    PsON : array (Ps'range) of Boolean := ( others => False);
     -- tworzenie sterownika bezpieczeństwa
     B : Bezpieczenstwo;
     -- zmienna bezpiecznego działania procesu
@@ -152,12 +155,12 @@ procedure kontrolerobiektu is
                 exit;
             or
                 accept Wstrzymaj do
-                    Put_Line (" SORTOWNIK WSTRZYMANY");
+                    Put_Line ("SORTOWNIK WSTRZYMANY");
                     pauza := True;
                 end Wstrzymaj;
             or
                 accept Wznow do
-                    Put_Line (" SORTOWNIK WZNOWIONY");
+                    Put_Line ("SORTOWNIK WZNOWIONY");
                     pauza := False;
                 end Wznow;
 
@@ -202,17 +205,20 @@ procedure kontrolerobiektu is
     -- PRZEMIENIĆ NA PAKIET GENERYCZNY O WEJŚCIACH NAZWA I TYP
     task body PakerObiektu is
         nazwa : String  := "BLANK";
+        numer : Integer := 0;
         typ   : Obiekt;
         dane  : Obiekt;
         pauza : Boolean := False;
     begin
-        accept Start (typO : in Obiekt; nazwaO : in String) do
+        accept Start (typO : in Obiekt; nazwaO : in String; numerO : in integer) do
             typ   := typO;
             nazwa := nazwaO;
+            numer := numerO;
         end Start;
         Put_Line
            (" PAKER OBIEKTU " & nazwa & " DLA " & typ'Img &
             " ROZPOCZYNA PRACE");
+        PsON(numer) := True;
         loop
             select
                 accept Stop;
@@ -233,16 +239,18 @@ procedure kontrolerobiektu is
                 -- sprawdzaj czy bufor nie jest pusty, jeśli nie jest pobierz
                     if not BOs (typ).Pusty then
                         BOs (typ).Pobierz (dane);
-                        Put_Line(" PAKER OBIEKTU " & nazwa & " SPAKOWAŁ " &dane'Img);
+                        Put_Line(" PAKER OBIEKTU " & nazwa & " SPAKOWAŁ " & dane'Img & "BOs(" & dane'Img & ")=" & BOs (typ).Poka);
                     end if;
                 end if;
             end select;
         end loop;
         Put_Line(" PAKER OBIEKTU " & nazwa & " DLA " & typ'Img & " KONCZY PRACE");
+        PsON(numer) := False;
     end PakerObiektu;
 
     -- task bezpieczeństwo implementacja
     task body Bezpieczenstwo is
+        hlpr : Boolean := False;
     begin
         accept Start;
         Put_Line (" STEROWNIK BEZPIECZENSTWA ROZPOCZAL DZIALANIE");
@@ -258,14 +266,28 @@ procedure kontrolerobiektu is
                 for S of Ss loop
                     S.Wstrzymaj;
                 end loop;
-                delay 5.0;
+            or
+                accept Wznow;
                 Put_Line ("KONIEC E-STOP");
                 T.Wznow;
                 for S of Ss loop
                     S.Wznow;
                 end loop;
+            else
+                null;
             end select;
         end loop;
+        Put_Line (" STEROWNIK BEZPIECZENSTWA OCZEKUJE NA ZAKONCZENIE PRACY NA HALI");
+        Check_Workers: loop
+            hlpr := True;
+            for stan of PsON loop
+                if stan then
+                    hlpr := False;
+                    exit;
+                end if;
+            end loop;
+            exit Check_Workers when hlpr;
+        end loop Check_Workers;
         Put_Line (" STEROWNIK BEZPIECZENSTWA ZAKONCZYL DZIALANIE");
         on := False;
     end Bezpieczenstwo;
@@ -279,7 +301,10 @@ begin
     end loop;
     -- startowanie i inicjacja pakerów
     for indeks in Ps'Range loop
-        Ps(indeks).Start(Obiekt'Val (indeks mod iloscTypow), "Pkr" & indeks'Img);
+        Ps(indeks).Start(
+            Obiekt'Val (indeks mod iloscTypow),
+            "Pkr" & indeks'Img,
+             indeks);
     end loop;
     --startowanie sortowników
     for S of Ss loop
@@ -287,7 +312,7 @@ begin
     end loop;
     -- startowanie taśmociągu
     delay 0.01;
-    T.Start (50);
+    T.Start (20);
     -- test bezpieczeństwa
     delay 2.0;
 
@@ -298,7 +323,7 @@ begin
         end if;
     end loop Przerwa_Pakerow_typu1;
 
-    delay 10.0;
+    delay 5.0;
 
     Powrot_Pakerow_typu1 :
     for I in Ps'Range loop
@@ -308,6 +333,8 @@ begin
     end loop Powrot_Pakerow_typu1;
 
     B.Sygnalizuj;
+    delay 1.0;
+    B.Wznow;
 
     -- czekaj jak wszystkie maszyny przestaną działać i wyłączą moduł bezpieczeństwa
     while on = True loop
