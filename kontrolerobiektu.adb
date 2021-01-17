@@ -59,13 +59,14 @@ procedure kontrolerobiektu is
     Ps : array (Integer range 0 .. 4) of PakerObiektu;
     -- tworzenie sterownika bezpieczeństwa
     B : Bezpieczenstwo;
+    -- zmienna bezpiecznego działania procesu
+    on : Boolean := False;
 
     -- task taśmociągu / generatora implementacja
     task body TasmociagObiektow is
         G                : LosObiekt.Generator;
         L                : Integer;
         pauza            : Boolean := False;
-        IloscWSortowniku : Integer := 0;
         dane             : Obiekt;
     begin
         accept Start (liczbaObiektow : in Integer) do
@@ -82,30 +83,20 @@ procedure kontrolerobiektu is
                     Put_Line ("TASMOCIAG WSTRZYMANY");
                     pauza := True;
                 end Wstrzymaj;
-                -- while True loop
             or
                 accept Wznow do
                     Put_Line ("TASMOCIAG WZNOWIONY");
                     pauza := False;
                 end Wznow;
-                --     exit;
-                -- end loop;
             else
-                -- -- zamiast else wykorzystany timed-entry
-                -- or
-                --     delay 0.05;
                 if not pauza then
-                    --S.Przyjmij(Float(Random(G)*5.0));
                     if not BS.Pelny then
                         dane := LosObiekt.Random (G);
-                        Put_Line
-                           (" TASMOCIAG UMIESCZCZA DANE TYPU »" & dane'Img &
-                            "« DO BUFORA SORTOWNIKA");
-                        BS.Wstaw (dane, IloscWSortowniku);
-                        Put_Line
-                           ("+++++ Ilosc elem w sortowniku po wstawieniu elem nr " &
-                            Ktory_Elem (L)'Img & ": " & BS.Ile'Img);
-
+                        --Put_Line
+                        --   (" TASMOCIAG UMIESCZCZA DANE TYPU »" & dane'Img &
+                        --    "« DO BUFORA SORTOWNIKA");
+                        BS.Wstaw (dane);--, IloscWSortowniku);
+                        Put_Line(" (" & L'Img &" ) TASMOCIAG WSTAWIA " & dane'Img & " DO BS()=" & BS.Poka);
                         L := L - 1;
                         delay 0.5;
                     else
@@ -140,7 +131,6 @@ procedure kontrolerobiektu is
         pauza         : Boolean := False;
         ilosc_elem    : Integer := 0;
         ilosc_sort    : Integer := 0;
-        s             : String (1..256);
     begin
         accept Start;
         Put_Line (" SORTOWNIK OBIEKTOW ROZPOCZYNA PRACE");
@@ -149,34 +139,27 @@ procedure kontrolerobiektu is
                 accept Stop;
                 Stop_Loop :
                 for I in Obiekt loop
-
                     while not BOs (I).Pusty loop
                         delay 0.01;
                     end loop;
-
                 end loop Stop_Loop;
 
                 Stop_Loop1 :
                 for I in Ps'Range loop
-
                     Ps (I).Stop;
-
                 end loop Stop_Loop1;
 
                 exit;
             or
                 accept Wstrzymaj do
-                    Put_Line ("SORTOWNIK WSTRZYMANY");
+                    Put_Line (" SORTOWNIK WSTRZYMANY");
                     pauza := True;
                 end Wstrzymaj;
-                -- while True loop
             or
                 accept Wznow do
-                    Put_Line ("SORTOWNIK WZNOWIONY");
+                    Put_Line (" SORTOWNIK WZNOWIONY");
                     pauza := False;
                 end Wznow;
-                --     exit;
-                -- end loop;
 
             else
                 if not pauza then
@@ -184,71 +167,30 @@ procedure kontrolerobiektu is
                     if not BS.Pusty then
                         delay 0.1;
                         BS.Pobierz (dane);
-                        --Put_Line(" SORTOWNIK OBIEKTOW POBRAŁ " & dane'Img);
-                        Put_Line
-                           ("------- Ilosc elem w sortowniku po pobraniu elem: " &
-                            BS.Ile'Img);
-            -- jeśli nie ma miejsca dla danego elementu to spróbuj go podmienić
+                        Put_Line(" SORTOWNIK POBRAŁ " & dane'Img & " Z BS()=" & BS.Poka);
+                        -- jeśli nie ma miejsca dla danego elementu to spróbuj go podmienić na inny
                         if BOs (dane).Pelny then
-                            Put_Line ("jestem tuuuu");
+                            Put_Line(" BUFOR POBRANEGO PRZEZ SORTOWNIK OBIEKTU JEST PRZEPEŁNIONY, PODMIENIAM...");
                             BS.Podmien (dane, podmieniony);
-                            Put_Line
-                               (" SORTOWNIK OBIEKTOW PODMIENIA ELEMENT NA" &
-                                dane'Img);
 -- jeśli podmiana się nie udała to poczekaj kiedy zwolni się miejsce w buforze
                             if not podmieniony then
-                                Put_Line (" SORTOWNIK NIE PODMIENIŁ ");
-                                BS.Wstaw (dane, ilosc_sort);
-                                Put_Line ("OBIEKT WRÓCIŁ DO SORTOWNIKA");
-                                -- TODO być może nie potrzebne ze względu na guarda                                 # # # #
-                                --while BOs(dane).Pelny loop
-                                --    delay 0.01;
-                                --end loop;
-                                -- doczekał się więc wrzuca
-                                --BOs(dane).Wstaw(dane, ilosc_elem);
-                                --numer_obiektu := numer_obiektu +1;
-                                --Put_Line(numer_obiektu'Img & " <--- NUMER OBIEKTU POSŁANEGO DO ODPOWIEDNIEGO POJEMNIKA | " & dane'Img &" <--- JEGO TYP | " & ilosc_elem'Img & "<--- ILOSC ELEM ");
+                                Put_Line(" SORTOWNIK NIE PODMIENIŁ WIEC CZEKA NA MIEJSCE");
+                                while BOs(dane).Pelny loop
+                                    delay 0.01;
+                                end loop;
                             else
-                                if not BOs (dane).Pelny then
-                                    BOs (dane).Wstaw (dane, ilosc_elem);
-                                    numer_obiektu := numer_obiektu + 1;
-                                    Put_Line
-                                       (numer_obiektu'Img &
-                                        " <--- NUMER OBIEKTU PODMIENIONEGO POSŁANEGO DO ODPOWIEDNIEGO POJEMNIKA | " &
-                                        dane'Img & " <--- JEGO TYP " &
-                                        ilosc_elem'Img & "<--- ILOSC ELEM ");
-                                    podmieniony := False;
-                                else
-                                    Put_Line
-                                       (" SORTOWNIK PODMIENIŁ, ALE CZEKA NA WOLNE MIEJSCE ");
+                                Put_Line(" SORTOWNIK PODMIENIŁ ELEMENT NA " & dane'Img);
+                                if BOs (dane).Pelny then
+                                    Put_Line(" SORTOWNIK PODMIENIŁ, ALE CZEKA NA WOLNE MIEJSCE ");
                                     while BOs (dane).Pelny loop
                                         delay 0.01;
                                     end loop;
-                                    -- doczekał się więc wrzuca
-                                    BOs (dane).Wstaw (dane, ilosc_elem);
-                                    podmieniony   := False;
-                                    numer_obiektu := numer_obiektu + 1;
-                                    Put_Line
-                                       (numer_obiektu'Img &
-                                        " <--- NUMER OBIEKTU PODMIENIONEGO POSŁANEGO DO ODPOWIEDNIEGO POJEMNIKA | " &
-                                        dane'Img & " <--- JEGO TYP " &
-                                        ilosc_elem'Img & "<--- ILOSC ELEM ");
                                 end if;
+                                podmieniony := False;
                             end if;
-                        else
-                            BOs (dane).Wstaw (dane, ilosc_elem);
-                            numer_obiektu := numer_obiektu + 1;
-                            Put_Line
-                               (numer_obiektu'Img &
-                                " <--- NUMER OBIEKTU POSŁANEGO DO ODPOWIEDNIEGO POJEMNIKA | " &
-                                dane'Img & " <--- JEGO TYP " & ilosc_elem'Img &
-                                "<--- ILOSC ELEM ");
                         end if;
-                        -- numer obiektu plus wyświetlanie a nawet wstawianie można przenieść poza IF
-                        --BOs (dane).Poka (s);
-                        --Put_Line("BOs(" & dane'Img & ")=" & s);
-                        Put_Line("BOs(" & dane'Img & ")=" & BOs (dane).Poka);
-                        
+                        BOs (dane).Wstaw (dane);
+                        Put_Line(" SORTOWNIK WSTAWIŁ " & dane'Img &" DO BOs(" & dane'Img & ")=" & BOs (dane).Poka);
                     end if;
                 end if;
             end select;
@@ -281,30 +223,22 @@ procedure kontrolerobiektu is
                     Put_Line ("------ PAKER " & nazwa & " MA PRZERWĘ ------");
                     pauza := True;
                 end Wstrzymaj;
-                -- while True loop
             or
                 accept Wznow do
                     Put_Line ("------ PAKER " & nazwa & " WRÓCIŁ ------");
                     pauza := False;
                 end Wznow;
-                --     exit;
-                -- end loop;
-
             else
                 if not pauza then
                 -- sprawdzaj czy bufor nie jest pusty, jeśli nie jest pobierz
                     if not BOs (typ).Pusty then
                         BOs (typ).Pobierz (dane);
-                        Put_Line
-                           (" PAKER OBIEKTU " & nazwa & " SPAKOWAŁ " &
-                            dane'Img);
-
+                        Put_Line(" PAKER OBIEKTU " & nazwa & " SPAKOWAŁ " &dane'Img);
                     end if;
                 end if;
             end select;
         end loop;
-        Put_Line
-           (" PAKER OBIEKTU " & nazwa & " dla " & typ'Img & " KONCZY PRACE");
+        Put_Line(" PAKER OBIEKTU " & nazwa & " DLA " & typ'Img & " KONCZY PRACE");
     end PakerObiektu;
 
     -- task bezpieczeństwo implementacja
@@ -312,55 +246,40 @@ procedure kontrolerobiektu is
     begin
         accept Start;
         Put_Line (" STEROWNIK BEZPIECZENSTWA ROZPOCZAL DZIALANIE");
+        on := True;
         loop
             select
                 accept Stop;
-                --Put_Line("ZATRZYMANIE LINI");
-                --T.Stop;
-                --for S of Ss loop
-                --    S.Stop;
-                --end loop;
-                --for P of Ps loop
-                --    P.Stop;
-                --end loop;
                 exit;
             or
                 accept Sygnalizuj;
-                Put_Line ("E-STOP");
+                Put_Line ("POCZATEK E-STOP");
                 T.Wstrzymaj;
                 for S of Ss loop
                     S.Wstrzymaj;
                 end loop;
-                -- for P of Ps loop
-                --     P.Wstrzymaj;
-                -- end loop;
-
                 delay 5.0;
                 Put_Line ("KONIEC E-STOP");
                 T.Wznow;
                 for S of Ss loop
                     S.Wznow;
                 end loop;
-
-                -- for P of Ps loop
-                --     P.Wznow;
-                -- end loop;
             end select;
         end loop;
         Put_Line (" STEROWNIK BEZPIECZENSTWA ZAKONCZYL DZIALANIE");
-        Put_Line
-           ("***** SYMULATOR SORTOWANIA I PAKOWANIA BEZPIECZNIE ZAKOŃCZYŁ DZIAŁANIE *****");
+        on := False;
     end Bezpieczenstwo;
 
 begin
     Put_Line ("***** SYMULATOR SORTOWANIA I PAKOWANIA *****");
     -- startowanie sterownika bezpieczeństwa
     B.Start;
+    while on /= True loop
+        null;
+    end loop;
     -- startowanie i inicjacja pakerów
     for indeks in Ps'Range loop
-        -- Put_Line(Obiekt'Val(indeks mod iloscTypow)'Img & " " & indeks'Img);
-        Ps (indeks).Start
-           (Obiekt'Val (indeks mod iloscTypow), "Pkr" & indeks'Img);
+        Ps(indeks).Start(Obiekt'Val (indeks mod iloscTypow), "Pkr" & indeks'Img);
     end loop;
     --startowanie sortowników
     for S of Ss loop
@@ -379,7 +298,7 @@ begin
         end if;
     end loop Przerwa_Pakerow_typu1;
 
-    delay 25.0;
+    delay 10.0;
 
     Powrot_Pakerow_typu1 :
     for I in Ps'Range loop
@@ -389,5 +308,12 @@ begin
     end loop Powrot_Pakerow_typu1;
 
     B.Sygnalizuj;
+
+    -- czekaj jak wszystkie maszyny przestaną działać i wyłączą moduł bezpieczeństwa
+    while on = True loop
+        null;
+    end loop;
+    
+    Put_Line("***** SYMULATOR SORTOWANIA I PAKOWANIA BEZPIECZNIE ZAKOŃCZYŁ DZIAŁANIE *****");
 
 end kontrolerobiektu;
