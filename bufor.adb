@@ -23,7 +23,7 @@ package body bufor is
         end Pobierz;
         -- podmiana elementu jak w mechaniźmie karuzelowym przez co można pakować elementy innego typu bez potrzeby czekania
         entry Podmien (X : in out TypElementu; sukces : out Boolean)
-            when (Ile > 0) is
+            when (Ile > 1) is
             indeks : indexerType := Pierwszy;
             tmp : TypElementu;
         begin

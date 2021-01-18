@@ -3,7 +3,7 @@ generic
     type TypElementu is private; -- dowolny typ 
 	with function Obraz (X : TypElementu) return String;
 package bufor is
-    N: constant Natural := 10; -- rozmiar bufora
+    N: constant Natural := 5; -- rozmiar bufora
 	type TypBufora is array(Integer range 0..(N-1)) of TypElementu; --tworzymy bufor(tablicę) długości N i zdefiniowanym wyżej typie elementów
 	type indexerType is mod N; -- indeksery są typu modulo, żeby przeładowanie powodowało przeskok na początek kolejki
 	protected type BuforP is
