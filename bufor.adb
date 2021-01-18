@@ -24,7 +24,7 @@ package body bufor is
         --jak w mechaniźmie karuzelowym(w przypadku przepełnionego bufora Pakera 
         --tego elementu) przez co można pakować elementy innego typu bez potrzeby czekania
         entry Podmien (X : in out TypElementu; sukces : out Boolean)
-            when (Ile > 0) is -- jesli bufor nie jest pusty to rozpocznij pobieranie, jeśli jest to poczekaj
+            when (Ile > 0) is -- jesli bufor nie jest pusty to rozpocznij próbe podmienienia obiektu, jeśli jest to poczekaj
             indeks : indexerType := Pierwszy;
             tmp : TypElementu;
         begin

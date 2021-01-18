@@ -73,6 +73,8 @@ procedure kontrolerobiektu is
             L := liczbaObiektow;
         end Start;
         Put_Line ("==== TASMOCIAG ROZPOCZYNA PRACE");
+        Put_Line (" ");
+
         Main: loop
             select
                 accept Stop;
@@ -162,20 +164,19 @@ procedure kontrolerobiektu is
 
                                                             --if not podmieniony then
                                                             --    Put_Line(" BUFOR POBRANEGO PRZEZ SORTOWNIK OBIEKTU JEST PRZEPEŁNIONY, PODMIENIAM...");
-                                Put_Line("Bede podmieniac");
                                 if(BS.Ile>1) then
-                                    Put_Line("Bedzie podmienianeee essaaa");
+                                    Put_Line("SORTOWNIK PRÓBUJE PODMIENIĆ OBIEKT NA INNY");
                                     BS.Podmien (dane, podmieniony);
                                 end if;
-                                Put_Line("Skonczylem");
+                                --Put_Line("Skonczylem");
                                                             --end if;
                                                             --else
                                 if podmieniony then
-                                    Put_Line("SORTOWNIK PODMIENIL ELEMENT I BEDZIE PROBOWAL WSTAWIC");
+                                    Put_Line("SORTOWNIK PODMIENIŁ ELEMENT I BEDZIE PRÓBOWAŁ WSTAWIĆ");
                                     stan := wstawianie; -- udalo sie podmienic, więc zmienia stan na wstawianie aby podjac probe wstawienia podmienionego obiektu
                                     podmieniony := False;
                                 else
-                                    Put_Line("Nie udalo sie podmienic sortownik czeka na miejsce");
+                                    Put_Line("SORTOWNIK NIE PODMIENIŁ, CZEKA NA MIEJSCE");
                                     stan := czekanie; -- nie udalo sie podmienic, wieć musi czekać na miejsce w odpowiednim buforze
                                 end if;
                                     
@@ -188,7 +189,7 @@ procedure kontrolerobiektu is
                         when czekanie =>  -- czeka aż pojawi się miejsce w buforze na dany obiekt, następnie wstawia go i przechodzi w stan pobieranie
                             if not BOs (dane).Pelny then
                                 BOs (dane).Wstaw(dane);
-                                Put_Line("SORTOWNIK sie doczeka i WSTAWIŁ " & dane'Img &" DO BOs(" & dane'Img & ")=" & BOs(dane).Wyswietl);
+                                Put_Line("SORTOWNIK POCZEKAŁ I WSTAWIŁ " & dane'Img &" DO BOs(" & dane'Img & ")=" & BOs(dane).Wyswietl);
                                 stan := pobieranie;
                             end if;
                     end case;
@@ -352,7 +353,6 @@ begin
     -- startowanie taśmociągu z podaniem ilosci obiektow do wygenerowania
     delay 0.01;
     T.Start (50);
-    Put_Line (" ");
 
     delay 2.0;
     -- wyslanie pakerow na przerwe - pokazanie wlasciwego dzialania symulatora w przypadku przepelnien buforow
