@@ -1,11 +1,21 @@
 # PWiRSortowaniePakowanie
-Projekt zaliczeniowy w ADA na programowanie współbierzne i rozproszone
+Projekt zaliczeniowy w ADA na programowanie współbieżne i rozproszone
 
-> Taśmociąg - tworzy losowo pary obiektów z zadaną częstotliwością, przesyła wylosowane obiekty do sortownika, do momentu zakończenia pracy
-> Sortownik - w zależności od typu obiektu przekazuje do odpowiedniego bufora
-> Bufor1 - bufor, jeżeli się przepełni to wstrzyma pracę taśmociągu 
-> Bufor2 - to samo tylko dla drugiego typu obiektu
-> Paker1 - ściąga z taśmociągu i pakuje dany obiekt wolniej niż są one generowane
-> Paker2 - to samo dla drugiego typu
-> ESTOP - task zajmujący się awaryjnym zatrzymaniem taśmy (czujniczki guziczki)
-> Główny kontroler - START, STOP ... obsługa aplikacji
+Celem naszego projektu jest symulowanie elementu linii produkcyjnej
+mającego za zadanie odbiór oraz rozdysponowanie różnego typu produktów
+do odpowiednich dyspenserów.
+
+Występujące elementy logiczne procesu to:
+    a. taśmociąg, będący źródłem elementów w losowej kolejności,
+    b. bufor wejściowy, skąd sortownik pobiera elementy
+    c. sortownik, który przekazuje elementy w dół linii do odpowiednich
+    buforów
+    d. bufory wyjściowe, czyli pojemniki zawierające elementy jednego typu
+    e. pakerzy, czyli pracownicy fabryki lub maszyny odpowiedzialni za
+    pakowanie konkretnego typu obiektów
+
+Dodatkowo nad całym procesem czuwa moduł bezpieczeństwa, do którego
+podłączone są czujniki mające za zadanie wstrzymanie linii, w wypadku
+zajścia mogącego potencjalnie prowadzić do wypadku, natomiast po
+zażegnaniu niebezpieczeństwa, wznowić jej działanie. Ponadto wstrzymuje
+on całkowite wyłączenie hali dopóki występują na niej pracujący robotnicy.
